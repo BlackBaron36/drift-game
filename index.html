@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Drift</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div id="game-container">
+  <canvas id="game-canvas"></canvas>
+
+  <div id="hud">
+    <div id="score-block">
+      <div id="score" class="hud-item">0.0</div>
+      <div id="shield-hud" class="hud-sub hidden">SHIELD x0</div>
+    </div>
+    <div class="hud-right">
+      <div id="best-score" class="hud-item">BEST 0.0</div>
+      <div id="sector-hud" class="hud-sub hidden">SECTOR 1/6</div>
+      <div id="fuel-hud" class="hud-sub hidden">FUEL x0</div>
+      <div id="hull-hud" class="hud-sub hidden">HULL 0/0</div>
+    </div>
+  </div>
+
+  <div id="start-screen" class="overlay">
+    <div class="card">
+      <h1>DRIFT</h1>
+      <p class="subtitle">Your escape pod is stranded. Chart a course home through the debris field.</p>
+      <p class="controls">Arrow keys / A·D to move &middot; Touch and drag on mobile</p>
+      <p class="bank-line">BANK <span id="bank-amount">0</span></p>
+      <p class="scrap-line">SCRAP <span id="scrap-amount">0</span></p>
+      <button id="select-ship-btn" class="action-btn">SELECT SHIP</button>
+      <button id="achievements-btn" class="link-btn">ACHIEVEMENTS</button>
+    </div>
+  </div>
+
+  <div id="ship-screen" class="overlay hidden">
+    <div class="card card-wide">
+      <h1>SELECT SHIP</h1>
+      <p class="subtitle">Spend your bank to unlock new ships.</p>
+      <div id="ship-select"></div>
+      <p id="ship-description" class="ship-description"></p>
+      <div id="weapon-section" class="hidden">
+        <p class="section-label">WEAPON</p>
+        <div id="weapon-select"></div>
+      </div>
+      <div id="shield-section" class="hidden">
+        <p class="section-label">SHIELDS</p>
+        <div id="shield-shop">
+          <div class="shield-count">OWNED <span id="shield-owned-count">0</span></div>
+          <button id="buy-shield-btn" class="buy-btn">BUY +1</button>
+        </div>
+        <p class="shield-hint">Consumed one at a time when a hit would otherwise end your run.</p>
+      </div>
+      <button id="play-btn" class="action-btn">LAUNCH</button>
+      <button id="research-lab-btn" class="link-btn">RESEARCH LAB</button>
+      <button id="ship-back-btn" class="link-btn">BACK</button>
+    </div>
+  </div>
+
+  <div id="map-screen" class="overlay hidden">
+    <div class="card card-wide">
+      <h1>NAVIGATION</h1>
+      <p class="subtitle">Pick your next sector. Reach the planet to complete the expedition.</p>
+      <p class="fuel-line">FUEL <span id="map-fuel-amount">0</span> / <span id="map-fuel-max">0</span></p>
+      <p id="map-fuel-warning" class="fuel-warning hidden">OUT OF FUEL — no jumps possible. Abandon to bank what you've earned.</p>
+      <div id="map-container"></div>
+      <div id="map-legend"></div>
+      <button id="abandon-btn" class="link-btn">ABANDON EXPEDITION</button>
+    </div>
+  </div>
+
+  <div id="gameover-screen" class="overlay hidden">
+    <div class="card">
+      <h1>EXPEDITION FAILED</h1>
+      <p class="final-score" id="final-score">0.0</p>
+      <p id="new-record" class="new-record hidden">NEW BEST</p>
+      <p class="best-line">BEST <span id="go-best">0.0</span></p>
+      <p class="bank-line">+<span id="go-earned">0</span> &rarr; BANK <span id="go-bank-total">0</span></p>
+      <p class="scrap-line hidden" id="go-scrap-line">+<span id="go-scrap-earned">0</span> SCRAP</p>
+      <button id="restart-btn" class="action-btn">NEW EXPEDITION</button>
+      <button id="go-ship-btn" class="link-btn">CHANGE SHIP</button>
+    </div>
+  </div>
+
+  <div id="complete-screen" class="overlay hidden">
+    <div class="card">
+      <h1>EXPEDITION COMPLETE</h1>
+      <p class="subtitle">You made it home.</p>
+      <p class="final-score" id="complete-score">0.0</p>
+      <p class="best-line" id="complete-bonus">+0 completion bonus</p>
+      <p class="best-line">BEST <span id="complete-best">0.0</span></p>
+      <p class="bank-line">+<span id="complete-earned">0</span> &rarr; BANK <span id="complete-bank-total">0</span></p>
+      <p class="scrap-line hidden" id="complete-scrap-line">+<span id="complete-scrap-earned">0</span> SCRAP</p>
+      <button id="complete-restart-btn" class="action-btn">NEW EXPEDITION</button>
+      <button id="complete-ship-btn" class="link-btn">CHANGE SHIP</button>
+    </div>
+  </div>
+
+  <div id="research-screen" class="overlay hidden">
+    <div class="card card-wide">
+      <h1>RESEARCH LAB</h1>
+      <p class="subtitle">Reverse-engineer Scrap into blueprints, then build them with Scrap + Credits.</p>
+      <p class="bank-line">BANK <span id="research-bank-amount">0</span></p>
+      <p class="scrap-line">SCRAP <span id="research-scrap-amount">0</span></p>
+      <div id="research-list"></div>
+      <button id="research-back-btn" class="link-btn">BACK</button>
+    </div>
+  </div>
+
+  <div id="depot-screen" class="overlay hidden">
+    <div class="card card-wide">
+      <h1>DEPOT</h1>
+      <p class="subtitle">Spend what you've earned THIS expedition. Nothing here touches your bank at home.</p>
+      <p class="bank-line">CREDITS <span id="depot-credits-amount">0</span></p>
+      <p class="scrap-line">SCRAP <span id="depot-scrap-amount">0</span></p>
+      <div id="depot-fuel-shop">
+        <p class="section-label">FUEL</p>
+        <div class="shield-count">TANK <span id="depot-fuel-count">0</span> / <span id="depot-fuel-cap">0</span></div>
+        <button id="depot-buy-fuel-btn" class="buy-btn">BUY +1</button>
+      </div>
+      <div id="depot-hull-shop">
+        <p class="section-label">HULL REPAIR</p>
+        <div class="shield-count">HULL <span id="depot-hull-current">0</span> / <span id="depot-hull-max">0</span></div>
+        <button id="depot-repair-btn" class="buy-btn">REPAIR +1</button>
+      </div>
+      <p class="section-label">BLACK-MARKET WEAPONS</p>
+      <div id="depot-weapon-list"></div>
+      <button id="depot-continue-btn" class="action-btn">BACK TO MAP</button>
+    </div>
+  </div>
+
+  <div id="achievements-screen" class="overlay hidden">
+    <div class="card card-wide">
+      <h1>ACHIEVEMENTS</h1>
+      <p class="subtitle">Persist across every expedition — check back after a run.</p>
+      <div id="achievements-list"></div>
+      <button id="achievements-back-btn" class="link-btn">BACK</button>
+    </div>
+  </div>
+
+  <div id="achievement-toast">
+    <div class="achievement-toast-label">ACHIEVEMENT UNLOCKED</div>
+    <div class="achievement-toast-name" id="achievement-toast-name"></div>
+  </div>
+</div>
+
+<script src="store.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
