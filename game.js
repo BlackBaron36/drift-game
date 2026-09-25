@@ -1046,7 +1046,7 @@
     ambient: 'assets/music/ambient.mp3',
     intense: 'assets/music/intense.mp3',
   };
-  const MUSIC_VOLUME = 0.35;
+  const MUSIC_VOLUME = 0.16; // background, not competing with sound effects
   const MUSIC_FADE_TIME = 1.5;
 
   const musicAudio = {};
@@ -1068,8 +1068,8 @@
     const startTime = performance.now();
     function step(now) {
       if (audio._fadeToken !== token) return; // superseded by a newer fade
-      const t = Math.min(1, (now - startTime) / (duration * 1000));
-      audio.volume = start + (target - start) * t;
+      const t = Math.max(0, Math.min(1, (now - startTime) / (duration * 1000)));
+      audio.volume = Math.max(0, Math.min(1, start + (target - start) * t));
       if (t < 1) {
         requestAnimationFrame(step);
       } else if (target === 0) {
@@ -1082,11 +1082,22 @@
   function unlockMusic() {
     if (musicUnlocked) return;
     musicUnlocked = true;
-    const audio = musicAudio[currentMusicMood];
-    if (!audio) return;
-    audio.volume = 0;
-    audio.play().catch(() => {});
-    fadeAudio(audio, MUSIC_VOLUME, MUSIC_FADE_TIME);
+    // Mobile browsers (iOS Safari especially) only bless an <audio> element
+    // for later programmatic play() if it was actually played during a real
+    // user gesture — priming just the current mood's track here left the
+    // other two silently blocked the first time a sector tried to switch to
+    // them. Play-then-immediately-pause every track once, in this same
+    // gesture, so all three are unlocked up front.
+    for (const [mood, audio] of Object.entries(musicAudio)) {
+      const playPromise = audio.play();
+      if (playPromise && playPromise.catch) playPromise.catch(() => {});
+      if (mood !== currentMusicMood) {
+        audio.pause();
+        audio.currentTime = 0;
+      }
+    }
+    const active = musicAudio[currentMusicMood];
+    if (active) fadeAudio(active, MUSIC_VOLUME, MUSIC_FADE_TIME);
   }
 
   function setMusicMood(mood) {
